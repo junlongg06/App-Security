@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using App_Security_Assignment.Data;
 using App_Security_Assignment.Models;
@@ -38,6 +39,14 @@ namespace App_Security_Assignment.Controllers
             _logger = logger;
         }
 
+        private string SanitizeInput(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+                return string.Empty;
+
+            return Regex.Replace(input, "[\r\n\t]", " "); // Remove newline and tab characters
+        }
+
         [HttpGet]
         public IActionResult Register()
         {
@@ -64,7 +73,7 @@ namespace App_Security_Assignment.Controllers
             {
                 if (await _userManager.IsLockedOutAsync(user))
                 {
-                    _logger.LogWarning("❌ User {Email} is locked out.", model.Email);
+                    _logger.LogWarning("❌ User {Email} is locked out.", SanitizeInput(model.Email));
                     TempData["LockoutMessage"] = "Your account is locked due to multiple failed login attempts. Try again later.";
                     return View(model);
                 }
@@ -72,18 +81,15 @@ namespace App_Security_Assignment.Controllers
                 var result = await _signInManager.PasswordSignInAsync(user, model.Password, model.RememberMe, true);
                 if (result.Succeeded)
                 {
-                    _logger.LogInformation("✅ User {Email} logged in successfully.", model.Email);
+                    _logger.LogInformation("✅ User {Email} logged in successfully.", SanitizeInput(model.Email));
 
-                    // ✅ Retrieve customer details
                     var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Email == user.Email);
                     if (customer != null)
                     {
-                        // ✅ Store session variables
                         HttpContext.Session.SetString("UserEmail", customer.Email);
                         HttpContext.Session.SetString("FirstName", customer.FirstName);
                     }
-
-                    return RedirectToAction("Index", "Home"); // ✅ Redirect to home page
+                    return RedirectToAction("Index", "Home");
                 }
                 else
                 {
@@ -92,12 +98,12 @@ namespace App_Security_Assignment.Controllers
 
                     if (result.IsLockedOut)
                     {
-                        _logger.LogWarning("❌ User {Email} locked out.", model.Email);
+                        _logger.LogWarning("❌ User {Email} locked out.", SanitizeInput(model.Email));
                         TempData["LockoutMessage"] = "Your account has been locked due to too many failed attempts.";
                     }
                     else
                     {
-                        _logger.LogWarning("❌ Invalid login attempt for {Email}. {AttemptsLeft} attempts left.", model.Email, attemptsLeft);
+                        _logger.LogWarning("❌ Invalid login attempt for {Email}. {AttemptsLeft} attempts left.", SanitizeInput(model.Email), attemptsLeft);
                         ModelState.AddModelError("", "Invalid login attempt.");
                     }
                 }
@@ -123,7 +129,7 @@ namespace App_Security_Assignment.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
-            _logger.LogInformation("🚀 Register method called! Received Email: {Email}", model.Email);
+            _logger.LogInformation("🚀 Register method called! Received Email: {Email}", SanitizeInput(model.Email));
 
             if (!ModelState.IsValid)
             {
@@ -133,12 +139,11 @@ namespace App_Security_Assignment.Controllers
                 {
                     foreach (var error in ModelState[key].Errors)
                     {
-                        _logger.LogWarning($"❌ {key}: {error.ErrorMessage}");
+                        _logger.LogWarning("❌ {Key}: {ErrorMessage}", key, error.ErrorMessage);
                     }
                 }
             }
 
-            // 🔹 Check for duplicate email
             var existingUser = await _userManager.FindByEmailAsync(model.Email);
             if (existingUser != null)
             {
@@ -147,7 +152,6 @@ namespace App_Security_Assignment.Controllers
                 return View(model);
             }
 
-            // 🔹 Encrypt Credit Card
             string encryptedCreditCard = EncryptionHelper.Encrypt(model.CreditCardNo);
 
             string profilePicPath = null;
@@ -171,7 +175,6 @@ namespace App_Security_Assignment.Controllers
                 _logger.LogInformation("✅ Profile Picture Saved!");
             }
 
-            // 🔹 Create Identity User
             var user = new IdentityUser { UserName = model.Email, Email = model.Email };
             var result = await _userManager.CreateAsync(user, model.Password);
 
@@ -204,7 +207,7 @@ namespace App_Security_Assignment.Controllers
             _logger.LogError("❌ User creation failed.");
             foreach (var error in result.Errors)
             {
-                _logger.LogError($"❌ Identity Error: {error.Description}");
+                _logger.LogError("❌ Identity Error: {ErrorDescription}", error.Description);
                 ModelState.AddModelError("", error.Description);
             }
 
