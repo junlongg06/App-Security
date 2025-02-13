@@ -1,0 +1,138 @@
+﻿@using App_Security_Assignment.Models.ViewModels
+@model LoginViewModel
+
+<h2>Login</h2>
+
+<!-- 🔹 Display Lockout Message & Countdown Timer -->
+@if (TempData["LockoutMessage"] != null)
+{
+    <div class="alert alert-danger">
+        <p id="lockoutMessage">@TempData["LockoutMessage"]</p>
+        <p id="countdownTimer"></p>
+    </div>
+}
+
+<!-- 🔹 Display Remaining Attempts Warning -->
+@if (TempData["AttemptsLeft"] != null)
+{
+    <div class="alert alert-warning">
+        ⚠️ Wrong email or password. You have <strong>@TempData["AttemptsLeft"]</strong> attempts left before account lockout.
+    </div>
+}
+
+<form asp-action="Login" method="post">
+    @Html.AntiForgeryToken()
+
+    <!-- 🔹 Email Field -->
+    <div class="form-group mb-3">
+        <label asp-for="Email" class="form-label">Email Address</label>
+        <input asp-for="Email" class="form-control" required />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <!-- 🔹 Password Field with Eye Icon -->
+    <div class="form-group mb-3">
+        <label asp-for="Password" class="form-label">Password</label>
+        <div class="input-group">
+            <input asp-for="Password" type="password" class="form-control" id="passwordField" required />
+            <button type="button" class="btn btn-outline-secondary" onclick="togglePassword()">
+                <i id="passwordToggleIcon" class="fa fa-eye-slash"></i>
+            </button>
+        </div>
+        <span asp-validation-for="Password" class="text-danger"></span>
+    </div>
+
+    <!-- 🔹 Remember Me Checkbox -->
+    <div class="form-group mb-3 form-check">
+        <input asp-for="RememberMe" class="form-check-input" />
+        <label asp-for="RememberMe" class="form-check-label">Remember Me</label>
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100">Login</button>
+</form>
+
+<!-- 🔹 Lockout Countdown Timer Script -->
+@if (TempData["LockoutMessage"] != null)
+{
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let lockoutEndTime = '@TempData["LockoutEnd"]';
+
+            if (lockoutEndTime) {
+                let endTime = new Date(lockoutEndTime).getTime();
+
+                function updateCountdown() {
+                    let now = new Date().getTime();
+                    let timeLeft = endTime - now;
+
+                    if (timeLeft > 0) {
+                        let minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                        let seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+                        document.getElementById("countdownTimer").innerHTML =
+                            `Unlocks in <strong>${minutes}m ${seconds}s</strong>`;
+
+                        setTimeout(updateCountdown, 1000);
+                    } else {
+                        document.getElementById("countdownTimer").innerHTML = "✅ You can now try logging in again.";
+                    }
+                }
+
+                updateCountdown();
+            }
+        });
+
+        function togglePassword() {
+            const passwordField = document.getElementById("passwordField");
+            const passwordToggleIcon = document.getElementById("passwordToggleIcon");
+
+            if (passwordField.type === "password") {
+                passwordField.type = "text";
+                passwordToggleIcon.classList.remove("fa-eye-slash");
+                passwordToggleIcon.classList.add("fa-eye");
+            } else {
+                passwordField.type = "password";
+                passwordToggleIcon.classList.remove("fa-eye");
+                passwordToggleIcon.classList.add("fa-eye-slash");
+            }
+        }
+    </script>
+}
+
+<style>
+    .is-invalid {
+        border: 2px solid red !important;
+    }
+
+    .error-message {
+        font-size: 0.9em;
+        font-weight: bold;
+        display: block;
+        margin-top: 5px;
+    }
+
+    .input-group {
+        position: relative;
+        display: flex;
+        align-items: center;
+        width: 100%;
+    }
+
+        .input-group .form-control {
+            padding-right: 40px;
+        }
+
+        .input-group .btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            outline: none;
+            padding: 5px;
+            z-index: 10;
+        }
+
+            .input-group .btn i {
+                font-size: 18px;
+                color: #666;
+            }
+</style>

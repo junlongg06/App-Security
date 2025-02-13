@@ -1,0 +1,180 @@
+﻿@using App_Security_Assignment.Models.ViewModels
+@model RegisterViewModel
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+<h2>Register</h2>
+
+<form asp-action="Register" method="post" enctype="multipart/form-data" id="registerForm">
+    @Html.AntiForgeryToken() <!-- CSRF Protection -->
+
+    <div class="form-group mb-3">
+        <label asp-for="FirstName" class="form-label">First Name</label>
+        <input asp-for="FirstName" class="form-control" required maxlength="50" pattern="[A-Za-z]+"
+               title="Only letters allowed." oninput="validateField(this)" />
+        <span asp-validation-for="FirstName" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="LastName" class="form-label">Last Name</label>
+        <input asp-for="LastName" class="form-control" required maxlength="50" pattern="[A-Za-z]+"
+               title="Only letters allowed." oninput="validateField(this)" />
+        <span asp-validation-for="LastName" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="CreditCardNo" class="form-label">Credit Card Number</label>
+        <input asp-for="CreditCardNo" class="form-control" required maxlength="16" pattern="\d{16}"
+               title="Credit card number must be exactly 16 digits." oninput="validateField(this)" />
+        <span class="text-danger error-message">Credit card must be **16 digits only**.</span> 
+        <span asp-validation-for="CreditCardNo" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="MobileNo" class="form-label">Mobile No</label>
+        <input asp-for="MobileNo" class="form-control" required pattern="\d{8}" 
+               title="Must be exactly 8 digits." oninput="validateField(this)" />
+        <span class="text-danger error-message">Mobile number must be **8 digits only**.</span>
+        <span asp-validation-for="MobileNo" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="BillingAddress" class="form-label">Billing Address</label>
+        <input asp-for="BillingAddress" class="form-control" required maxlength="200" />
+        <span asp-validation-for="BillingAddress" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="ShippingAddress" class="form-label">Shipping Address</label>
+        <input asp-for="ShippingAddress" class="form-control" />
+        <span asp-validation-for="ShippingAddress" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="Email" class="form-label">Email Address</label>
+        <input asp-for="Email" class="form-control" required type="email"
+               pattern="[a-zA-Z0-9._%+-]+[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}" id="Email" oninput="validateField(this)" />
+        <span class="text-danger error-message">Email must be **valid** (e.g. example@mail.com).</span>
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label class="form-label">Password</label>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="togglePasswordVisibility()">
+            <i id="passwordToggleIcon" class="fa fa-eye-slash"></i>
+        </button>
+        <div class="input-group">
+            <input asp-for="Password" type="password" class="form-control" id="Password" required minlength="12"
+                   oninput="checkPasswordStrength(); validateConfirmPassword()" />
+        </div>
+        <small id="passwordStrength" class="text-muted">Strength: Weak</small> <!-- Always visible -->
+        <span class="text-danger error-message" id="passwordError">
+            Min 12 chars, Use combination of lower-case, upper-case, numbers, and special characters.
+        </span>
+        <span asp-validation-for="Password" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
+        <input asp-for="ConfirmPassword" type="password" class="form-control" id="ConfirmPassword" required
+               oninput="validateConfirmPassword()" />
+        <span class="text-danger error-message">Password and Confirm Password must be **the same**.</span>
+        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="ProfilePicture" class="form-label">Photo (.JPG only)</label>
+        <input asp-for="ProfilePicture" type="file" class="form-control" />
+        <span asp-validation-for="ProfilePicture" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100">Register</button>
+</form>
+
+<script>
+function validateField(field) {
+    const errorSpan = field.nextElementSibling;
+    if (!field.checkValidity()) {
+        errorSpan.style.display = "inline"; // Show error
+    } else {
+        errorSpan.style.display = "none"; // Hide error when valid
+    }
+}
+
+    function togglePasswordVisibility() {
+        const passwordInput = document.getElementById("Password");
+        const passwordToggleIcon = document.getElementById("passwordToggleIcon");
+
+        if (passwordInput.type === "password") {
+            passwordInput.type = "text";
+            passwordToggleIcon.classList.remove("fa-eye-slash");
+            passwordToggleIcon.classList.add("fa-eye");
+        } else {
+            passwordInput.type = "password";
+            passwordToggleIcon.classList.remove("fa-eye");
+            passwordToggleIcon.classList.add("fa-eye-slash");
+        }
+    }
+
+    function checkPasswordStrength() {
+        const passwordInput = document.getElementById("Password");
+        const strengthMessage = document.getElementById("passwordStrength");
+        const passwordError = document.getElementById("passwordError");
+
+        const value = passwordInput.value;
+        let strength = "Weak";
+        let colorClass = "text-danger";
+        let isValid = false;
+
+        if (value.length >= 12 && /[A-Z]/.test(value) && /[a-z]/.test(value) && /\d/.test(value) && /[$!%*?&]/.test(value)) {
+            strength = "Strong";
+            colorClass = "text-success";
+            isValid = true;
+        } else if (value.length >= 8) {
+            strength = "Moderate";
+            colorClass = "text-warning";
+        }
+
+        strengthMessage.innerText = `Strength: ${strength}`;
+        strengthMessage.classList.remove("text-danger", "text-warning", "text-success");
+        strengthMessage.classList.add(colorClass);
+
+        // Show/hide error message dynamically
+        passwordError.style.display = isValid ? "none" : "inline";
+    }
+
+function validateConfirmPassword() {
+    const passwordInput = document.getElementById("Password");
+    const confirmPasswordInput = document.getElementById("ConfirmPassword");
+    const confirmPasswordError = confirmPasswordInput.nextElementSibling; // Get error span
+
+    if (confirmPasswordInput.value === passwordInput.value) {
+        confirmPasswordError.style.display = "none";
+    } else {
+        confirmPasswordError.style.display = "inline";
+    }
+}
+
+document.querySelectorAll(".form-control").forEach(input => {
+    input.addEventListener("input", () => validateField(input));
+});
+</script>
+
+<style>
+    .is-invalid {
+        border: 2px solid red !important;
+    }
+    .error-message {
+        font-size: 0.9em;
+        font-weight: bold;
+        display: none; /* Hide errors initially */
+        margin-top: 5px;
+    }
+    .toggle-password {
+        background: none;
+        border: none;
+        cursor: pointer;
+        outline: none;
+        padding: 5px;
+    }
+</style>

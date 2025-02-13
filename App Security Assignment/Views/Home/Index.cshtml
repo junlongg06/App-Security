@@ -1,0 +1,46 @@
+﻿@{
+    ViewData["Title"] = "Home";
+}
+
+<h2>Welcome, @ViewBag.FirstName!</h2>
+
+<div class="card">
+    <div class="card-body">
+        <h4>User Information</h4>
+        <p><strong>Email:</strong> @ViewBag.Email</p>
+        <p><strong>Full Name:</strong> @ViewBag.FirstName @ViewBag.LastName</p>
+        <p><strong>Mobile No:</strong> @ViewBag.MobileNo</p>
+        <p><strong>Billing Address:</strong> @ViewBag.BillingAddress</p>
+        <p><strong>Shipping Address:</strong> @ViewBag.ShippingAddress</p>
+
+        <h4>Credit Card Information</h4>
+        <p><strong>Encrypted Credit Card No:</strong> @ViewBag.EncryptedCreditCard</p>
+
+        <h4>Password Information</h4>
+        <p><strong>Encrypted Password:</strong> @ViewBag.EncryptedPassword</p>  <!-- ✅ Now displays encrypted password -->
+
+        <h4>Profile Picture</h4>
+        <img src="@ViewBag.ProfilePicture" alt="Profile Picture" class="img-thumbnail" width="150" height="150" />
+    </div>
+</div>
+
+<a asp-controller="Account" asp-action="Logout" class="btn btn-danger mt-3">Logout</a>
+
+<script>
+    let sessionTimeout = 180000; // 3 minutes (180,000 ms)
+    let logoutUrl = '@Url.Action("Login", "Account")';
+
+    function resetTimer() {
+        clearTimeout(window.sessionTimer);
+        window.sessionTimer = setTimeout(() => {
+            alert("Session expired! You will be logged out.");
+            window.location.href = logoutUrl;
+        }, sessionTimeout);
+    }
+
+    // Reset Timer on User Activity
+    document.addEventListener("mousemove", resetTimer);
+    document.addEventListener("keypress", resetTimer);
+
+    resetTimer(); // Start Timer Initially
+</script>
