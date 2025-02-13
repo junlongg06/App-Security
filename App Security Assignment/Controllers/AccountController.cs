@@ -64,7 +64,7 @@ namespace App_Security_Assignment.Controllers
             {
                 if (await _userManager.IsLockedOutAsync(user))
                 {
-                    _logger.LogWarning($"❌ User {model.Email} is locked out.");
+                    _logger.LogWarning("❌ User {Email} is locked out.", model.Email);
                     TempData["LockoutMessage"] = "Your account is locked due to multiple failed login attempts. Try again later.";
                     return View(model);
                 }
@@ -72,7 +72,7 @@ namespace App_Security_Assignment.Controllers
                 var result = await _signInManager.PasswordSignInAsync(user, model.Password, model.RememberMe, true);
                 if (result.Succeeded)
                 {
-                    _logger.LogInformation($"✅ User {model.Email} logged in successfully.");
+                    _logger.LogInformation("✅ User {Email} logged in successfully.", model.Email);
 
                     // ✅ Retrieve customer details
                     var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Email == user.Email);
@@ -92,12 +92,12 @@ namespace App_Security_Assignment.Controllers
 
                     if (result.IsLockedOut)
                     {
-                        _logger.LogWarning($"❌ User {model.Email} locked out.");
+                        _logger.LogWarning("❌ User {Email} locked out.", model.Email);
                         TempData["LockoutMessage"] = "Your account has been locked due to too many failed attempts.";
                     }
                     else
                     {
-                        _logger.LogWarning($"❌ Invalid login attempt for {model.Email}. {attemptsLeft} attempts left.");
+                        _logger.LogWarning("❌ Invalid login attempt for {Email}. {AttemptsLeft} attempts left.", model.Email, attemptsLeft);
                         ModelState.AddModelError("", "Invalid login attempt.");
                     }
                 }
@@ -123,7 +123,7 @@ namespace App_Security_Assignment.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
-            _logger.LogInformation($"🚀 Register method called! Received Data: {model.Email}, {model.FirstName}");
+            _logger.LogInformation("🚀 Register method called! Received Email: {Email}", model.Email);
 
             if (!ModelState.IsValid)
             {
